@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/vega@5.30.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.20.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.26.0"></script>
+</head>
+<body>
+  <div id="vis"/>
+  <script>
+    const spec = {
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "title": "Death Rates in Malaysia per 100,000 people (2022)",
+  "width": 800,
+  "height": 400,
+  "projection": {"type": "mercator"},
+  "layer": [
+    {
+      "data": {
+        "url": "https://raw.githubusercontent.com/qchu0005/FIT3179-W9/refs/heads/main/data/ne_10m_admin_1_states_provinces.json",
+        "format": {
+          "type": "topojson",
+          "feature": "ne_10m_admin_1_states_provinces"
+        }
+      },
+      "transform": [
+        {
+          "lookup": "properties.name",
+          "from": {
+            "data": {
+              "url": "https://raw.githubusercontent.com/qchu0005/FIT3179-W9/refs/heads/main/data/death_state_2022.csv"
+            },
+            "key": "state",
+            "fields": ["abs"]
+          }
+        },
+        {
+          "lookup": "properties.name",
+          "from": {
+            "data": {
+              "url": "https://raw.githubusercontent.com/qchu0005/FIT3179-W9/refs/heads/main/data/population_cleaned.csv"
+            },
+            "key": "state",
+            "fields": ["population"]
+          }
+        },
+        {
+          "calculate": "(datum.abs / datum.population) * 100000",
+          "as": "Deaths per 100,000 population"
+        }
+      ],
+      "mark": {"type": "geoshape"},
+      "encoding": {
+        "color": {
+          "field": "Deaths per 100,000 population",
+          "type": "quantitative",
+          "scale": {
+            "type": "threshold",
+            "domain": [500000, 650000, 750000, 850000],
+            "range": ["#fdbe85", "#fd8d3c", "#e6550d", "#a63603"]
+          }
+        },
+        "tooltip": [
+          {"field": "properties.name", "type": "nominal", "title": "State"},
+          {"field": "Deaths per 100,000 population", "type": "quantitative"}
+        ]
+      }
+    },
+    {
+      "mark": {"type": "geoshape", "stroke": "lightgray", "strokeWidth": 0.5},
+      "data": {
+        "graticule": {"step": [2, 2], "extent": [[119.5, 9.8], [99.5, 0]]}
+      }
+    },
+    {
+      "mark": {"type": "circle", "color": "blue", "size": 50},
+      "data": {
+        "url": "https://raw.githubusercontent.com/qchu0005/FIT3179-W9/refs/heads/main/data/ne_10m_populated_places.json",
+        "format": {"type": "topojson", "feature": "ne_10m_populated_places"}
+      },
+      "encoding": {
+        "longitude": {"field": "properties.LONGITUDE", "type": "quantitative"},
+        "latitude": {"field": "properties.LATITUDE", "type": "quantitative"},
+        "tooltip": [
+          {
+            "field": "properties.NAME_ID",
+            "type": "nominal",
+            "title": "Populated Place"
+          }
+        ]
+      }
+    }
+  ],
+  "config": {}
+};
+    vegaEmbed("#vis", spec, {mode: "vega-lite"}).then(console.log).catch(console.warn);
+  </script>
+</body>
+</html>
