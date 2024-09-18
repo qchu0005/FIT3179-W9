@@ -1,37 +1,74 @@
 {
-    "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-    "title": "Death Rates in Malaysia during 2022 by States (in 1000s)",
-    "width": 800,
-    "height": 400,
-    "projection": {"type": "equalEarth"},
-    "data": {
-    "url": "https://raw.githubusercontent.com/qchu0005/FIT3179-W9/refs/heads/main/ne_10m_admin_1_states_provinces.json",
-    "format": {"type": "topojson", "feature": "ne_10m_admin_1_states_provinces"}
-    },
-    "transform": [
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "title": "Death Rates in Malaysia per 100,000 people (2022)",
+  "width": 800,
+  "height": 400,
+  "projection": {"type": "mercator"},
+  "layer": [
     {
-    "lookup": "properties.name",
-    "from": {
-    "data": {
-    "url": "https://raw.githubusercontent.com/qchu0005/FIT3179-W9/refs/heads/main/statistic_id1040803_number-of-deaths-in-malaysia-2022-by-state.csv"
+      "data": {
+        "url": "https://raw.githubusercontent.com/qchu0005/FIT3179-W9/refs/heads/main/data/ne_10m_admin_1_states_provinces.json",
+        "format": {"type": "topojson", "feature": "ne_10m_admin_1_states_provinces"}
+      },
+      "transform": [
+        {
+          "lookup": "properties.name",
+          "from": {
+            "data": {
+              "url": "https://raw.githubusercontent.com/qchu0005/FIT3179-W9/refs/heads/main/data/death_state_2022.csv"
+            },
+            "key": "state",
+            "fields": ["abs"]
+          }
+        },
+        {
+          "lookup": "properties.name",
+          "from": {
+            "data": {
+              "url": "https://raw.githubusercontent.com/qchu0005/FIT3179-W9/refs/heads/main/data/population_cleaned.csv"
+            },
+            "key": "state",
+            "fields": ["population"]
+          }
+        },
+        {
+          "calculate": "(datum.abs / datum.population) * 100000",
+          "as": "Deaths per 100,000 population"
+        }
+      ],
+      "mark": {"type": "geoshape"},
+      "encoding": {
+        "color": {
+          "field": "Deaths per 100,000 population",
+          "type": "quantitative",
+          "scale": {
+            "type": "threshold",
+            "domain": [500000, 650000, 750000, 850000],
+            "range": ["#fdbe85", "#fd8d3c", "#e6550d", "#a63603"]
+          }
+        },
+
+        "tooltip": [
+          {"field": "properties.name", "type": "nominal", "title": "State"},
+          {"field": "Deaths per 100,000 population", "type": "quantitative"}
+        ]
+      }
     },
-    "key": "State",
-    "fields": ["Rate"]
-    }
+    {
+      "mark": {"type": "geoshape", "stroke": "lightgray", "strokeWidth": 0.5},
+      "data": {"graticule": {"step": [2, 2], "extent": [[119.5, 9.8], [99.5, 0]]}},
     },
-    {"calculate": "datum.Rate", "as": "Death Rates"}
-    ],
-    "mark": {"type": "geoshape"},
-    "encoding": {
-    "color": {
-    "field": "Death Rates",
-    "type": "quantitative",
-    "scale": {"type": "log"}
-    },
-    "tooltip": [
-    {"field": "properties.name", "type": "nominal", "title":
-    "States"},
-    {"field": "Death Rates", "type": "quantitative"}
-    ]
+    {
+      "mark": {"type": "circle", "color": "blue", "size": 50},
+      "data": {
+        "url": "https://raw.githubusercontent.com/qchu0005/FIT3179-W9/refs/heads/main/data/ne_10m_populated_places.json",
+        "format": {"type": "topojson", "feature": "ne_10m_populated_places"}
+      },
+      "encoding": {
+        "longitude": {"field": "properties.LONGITUDE", "type": "quantitative"},
+        "latitude": {"field": "properties.LATITUDE", "type": "quantitative"},
+        "tooltip": [{"field": "properties.NAME_ID", "type": "nominal", "title": "Populated Place"}]
+      }
     }
-    }
+  ]
+}
